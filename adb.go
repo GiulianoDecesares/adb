@@ -3,10 +3,9 @@ package adb
 import (
 	"context"
 	"fmt"
+	"os"
 	"os/exec"
 	"strings"
-
-	"github.globant.com/Facebook/hwtp-oculus-launcher/lib/utils"
 )
 
 const (
@@ -29,20 +28,17 @@ func New(config AdbConfig) *Adb {
 }
 
 func (adb *Adb) Check() error {
-	var result error = nil
-	var isFile bool = false
+	info, err := os.Stat(adb.config.AdbPath)
 
-	if isFile, result = utils.IsFile(adb.config.AdbPath); result == nil {
-		if isFile {
-			if !utils.FileExists(adb.config.AdbPath) {
-				result = fmt.Errorf("File %s doesn't exists", adb.config.AdbPath)
-			}
-		} else {
-			result = fmt.Errorf("%s is not ADB executable file", adb.config.AdbPath)
-		}
+	if err != nil {
+		return err
 	}
 
-	return result
+	if info.IsDir() {
+		return fmt.Errorf("%s is not ADB executable file", adb.config.AdbPath)
+	}
+
+	return nil
 }
 
 // Start starts the ADB server
