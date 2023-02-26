@@ -87,6 +87,10 @@ func (device *Device) Push(localPath string, remotePath string) error {
 	return device.executeCommand("push", localPath, remotePath)
 }
 
+func (device *Device) Delete(remotePath string) error {
+	return device.executeCommand("shell", "rm", remotePath)
+}
+
 func (device *Device) WakeUp() error {
 	return device.executeCommand("shell", "input", "keyevent", "KEYCODE_WAKEUP")
 }
