@@ -87,8 +87,12 @@ func (device *Device) Push(localPath string, remotePath string) error {
 	return device.executeCommand("push", localPath, remotePath)
 }
 
-func (device *Device) Delete(remotePath string) error {
+func (device *Device) DeleteFile(remotePath string) error {
 	return device.executeCommand("shell", "rm", remotePath)
+}
+
+func (device *Device) DeleteDir(remotePath string) error {
+	return device.executeCommand("shell", "rmdir", remotePath)
 }
 
 func (device *Device) WakeUp() error {
