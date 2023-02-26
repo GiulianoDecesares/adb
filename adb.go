@@ -19,6 +19,8 @@ type AdbConfig struct {
 
 type Adb struct {
 	config AdbConfig
+
+	devices []IDevice
 }
 
 func New(config AdbConfig) *Adb {
@@ -63,16 +65,32 @@ func (adb *Adb) GetVersion() (string, error) {
 	return versionString, err
 }
 
-func (adb *Adb) Devices() ([]Device, error) {
+func (adb *Adb) Devices() ([]IDevice, error) {
 	var result error
 	var rawDevices string
-	var devices []Device
+	var devices []IDevice
 
 	if rawDevices, result = adb.ExecuteCommandWithReturn("devices", "-l"); result == nil {
 		devices = adb.parseDevicesString(rawDevices)
 	}
 
 	return devices, result
+}
+
+func (adb *Adb) ReleaseDevice(device *Device) {
+	var tempDevices []IDevice
+
+	for _, current := range adb.devices {
+		if current != device {
+			tempDevices = append(tempDevices, current)
+		}
+	}
+
+	adb.devices = tempDevices
+
+	if len(adb.devices) == 0 {
+		adb.Stop()
+	}
 }
 
 func (adb *Adb) ExecuteCommand(command ...string) error {
@@ -102,8 +120,8 @@ func (adb *Adb) ExecuteCommandWithReturn(command ...string) (string, error) {
 	return string(rawOutput), result
 }
 
-func (adb *Adb) parseDevicesString(rawDevices string) []Device {
-	var devices []Device = make([]Device, 0)
+func (adb *Adb) parseDevicesString(rawDevices string) []IDevice {
+	var devices []IDevice = make([]IDevice, 0)
 	var devicesStrings []string = strings.Split(rawDevices, "\n")
 
 	if len(devicesStrings) > 0 {
@@ -164,8 +182,8 @@ func (adb *Adb) parseDevicesString(rawDevices string) []Device {
 						}
 					}
 
-					var device *Device = NewDevice(deviceName, deviceProduct, deviceModel, deviceStr, adb)
-					devices = append(devices, *device)
+					var device IDevice = NewDevice(deviceName, deviceProduct, deviceModel, deviceStr, adb)
+					devices = append(devices, device)
 				}
 			}
 		}

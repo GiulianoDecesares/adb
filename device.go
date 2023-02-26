@@ -130,6 +130,10 @@ func (device *Device) LogcatWithFilter(context context.Context, filter string) *
 	return device.adbInstance.ExecuteCommandWithContext(context, "logcat", "-s", filter)
 }
 
+func (device *Device) Release() {
+	device.adbInstance.ReleaseDevice(device)
+}
+
 func (device *Device) executeCommand(command ...string) error {
 	var arguments []string
 
