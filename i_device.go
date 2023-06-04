@@ -6,6 +6,7 @@ type IDevice interface {
 	GetId() string
 	GetModel() string
 	GetProduct() string
+	GetCodeName() string
 
 	IsPackageInstalled(packageName string) bool
 	Install(packagePath string, overwrite bool) error
