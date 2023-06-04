@@ -36,6 +36,10 @@ func (device *Device) GetProduct() string {
 	return device.product
 }
 
+func (device *Device) GetCodeName() string {
+	return device.device
+}
+
 func (device *Device) IsPackageInstalled(packageName string) bool {
 	var result bool = false
 	output, _ := device.executeCommandWithReturn("shell", "pm", "list", "packages")
