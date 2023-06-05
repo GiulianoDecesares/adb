@@ -2,6 +2,7 @@ package adb
 
 import (
 	"context"
+	"path/filepath"
 	"strings"
 )
 
@@ -96,7 +97,7 @@ func (device *Device) DeleteFile(remotePath string) error {
 }
 
 func (device *Device) DeleteDir(remotePath string) error {
-	return device.executeCommand("shell", "rmdir", remotePath)
+	return device.executeCommand("shell", "rm", "-rf", filepath.ToSlash(filepath.Join(remotePath, "*")))
 }
 
 func (device *Device) WakeUp() error {
