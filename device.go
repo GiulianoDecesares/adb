@@ -2,8 +2,10 @@ package adb
 
 import (
 	"context"
-	"path/filepath"
+	"fmt"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
 type Device struct {
@@ -25,28 +27,51 @@ func NewDevice(id string, product string, model string, device string, adb *Adb)
 	}
 }
 
-func (device *Device) GetId() string {
+func (device Device) GetId() string {
 	return device.id
 }
 
-func (device *Device) GetModel() string {
+func (device Device) GetModel() string {
 	return strings.ToLower(device.model)
 }
 
-func (device *Device) GetProduct() string {
+func (device Device) GetProduct() string {
 	return device.product
 }
 
-func (device *Device) GetCodeName() string {
+func (device Device) GetCodeName() string {
 	return device.device
+}
+
+func (device Device) GetOsVersion() (string, error) {
+	output, err := device.executeCommandWithReturn("shell", "getprop", "ro.build.version.release")
+
+	if err != nil {
+		return "", errors.Wrap(err, "error getting os version from device")
+	}
+
+	return strings.TrimSpace(string(output)), nil
+}
+
+func (device Device) GetManufacturer() (string, error) {
+	output, err := device.executeCommandWithReturn("shell", "getprop", "ro.product.manufacturer")
+
+	if err != nil {
+		return "", errors.Wrap(err, "error getting manufacturer from device")
+	}
+
+	return strings.TrimSpace(string(output)), nil
 }
 
 func (device *Device) IsPackageInstalled(packageName string) bool {
 	var result bool = false
 	output, _ := device.executeCommandWithReturn("shell", "pm", "list", "packages")
 
-	for _, packageName := range strings.Split(string(output), "\n") {
-		if packageCantidate := strings.Replace(packageName, "package:", "", 1); packageCantidate == packageName {
+	packageName = strings.TrimSpace(fmt.Sprintf("package:%s", packageName))
+	installed := strings.Split(string(output), "\r\n")
+
+	for _, current := range installed {
+		if current == packageName {
 			result = true
 			break
 		}
@@ -97,7 +122,7 @@ func (device *Device) DeleteFile(remotePath string) error {
 }
 
 func (device *Device) DeleteDir(remotePath string) error {
-	return device.executeCommand("shell", "rm", "-rf", filepath.ToSlash(filepath.Join(remotePath, "*")))
+	return device.executeCommand("shell", "rmdir", remotePath)
 }
 
 func (device *Device) WakeUp() error {

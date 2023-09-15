@@ -8,6 +8,9 @@ type IDevice interface {
 	GetProduct() string
 	GetCodeName() string
 
+	GetOsVersion() (string, error)
+	GetManufacturer() (string, error)
+
 	IsPackageInstalled(packageName string) bool
 	Install(packagePath string, overwrite bool) error
 	Uninstall(packageName string) error

@@ -18,8 +18,7 @@ type AdbConfig struct {
 }
 
 type Adb struct {
-	config AdbConfig
-
+	config  AdbConfig
 	devices []IDevice
 }
 
@@ -182,8 +181,7 @@ func (adb *Adb) parseDevicesString(rawDevices string) []IDevice {
 						}
 					}
 
-					var device IDevice = NewDevice(deviceName, deviceProduct, deviceModel, deviceStr, adb)
-					devices = append(devices, device)
+					devices = append(devices, NewDevice(deviceName, deviceProduct, deviceModel, deviceStr, adb))
 				}
 			}
 		}
