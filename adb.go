@@ -42,12 +42,10 @@ func (adb *Adb) Check() error {
 	return nil
 }
 
-// Start starts the ADB server
 func (adb *Adb) Start() error {
 	return adb.ExecuteCommand("start-server")
 }
 
-// Stop kills the ADB server
 func (adb *Adb) Stop() error {
 	return adb.ExecuteCommand("kill-server")
 }

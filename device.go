@@ -152,6 +152,10 @@ func (device *Device) IsFile(deviceFilePath string) bool {
 	return err == nil
 }
 
+func (device *Device) CatFile(deviceFilePath string) (string, error) {
+	return device.executeCommandWithReturn("shell", "cat", deviceFilePath)
+}
+
 func (device *Device) Logcat(context context.Context) *BufferedOutput {
 	return device.adbInstance.ExecuteCommandWithContext(context, "logcat")
 }
