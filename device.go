@@ -171,7 +171,7 @@ func (device *Device) SetPermission(grant bool, packageName string, permission s
 		command = "revoke"
 	}
 
-	return device.adbInstance.ExecuteCommand("pm", command, packageName, permission)
+	return device.adbInstance.ExecuteCommand("shell", "pm", command, packageName, permission)
 }
 
 // This will work only for Android 11.0+
@@ -182,7 +182,7 @@ func (device *Device) SetGps(enabled bool) error {
 		enable = "3" // Enabled
 	}
 
-	return device.adbInstance.ExecuteCommand("settings", "put", "secure", "location_mode", enable)
+	return device.adbInstance.ExecuteCommand("shell", "settings", "put", "secure", "location_mode", enable)
 }
 
 func (device *Device) Release() {
