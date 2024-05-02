@@ -164,6 +164,27 @@ func (device *Device) LogcatWithFilter(context context.Context, filter string) *
 	return device.adbInstance.ExecuteCommandWithContext(context, "logcat", "-s", filter)
 }
 
+func (device *Device) SetPermission(grant bool, packageName string, permission string) error {
+	command := "grant"
+
+	if !grant {
+		command = "revoke"
+	}
+
+	return device.adbInstance.ExecuteCommand("pm", command, packageName, permission)
+}
+
+// This will work only for Android 11.0+
+func (device *Device) SetGps(enabled bool) error {
+	enable := "0" // Disabled
+
+	if enabled {
+		enable = "3" // Enabled
+	}
+
+	return device.adbInstance.ExecuteCommand("settings", "put", "secure", "location_mode", enable)
+}
+
 func (device *Device) Release() {
 	device.adbInstance.ReleaseDevice(device)
 }

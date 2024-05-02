@@ -32,5 +32,8 @@ type IDevice interface {
 	Logcat(context context.Context) *BufferedOutput
 	LogcatWithFilter(context context.Context, filter string) *BufferedOutput
 
+	SetPermission(grant bool, packageName string, permission string) error
+	SetGps(enabled bool) error
+
 	Release()
 }
