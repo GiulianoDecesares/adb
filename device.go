@@ -125,6 +125,10 @@ func (device *Device) DeleteDir(remotePath string) error {
 	return device.executeCommand("shell", "rmdir", remotePath)
 }
 
+func (device *Device) CreateDir(remotePath string) error {
+	return device.executeCommand("shell", "mkdir", "-p", "\""+remotePath+"\"")
+}
+
 func (device *Device) WakeUp() error {
 	return device.executeCommand("shell", "input", "keyevent", "KEYCODE_WAKEUP")
 }
@@ -183,6 +187,20 @@ func (device *Device) SetGps(enabled bool) error {
 	}
 
 	return device.adbInstance.ExecuteCommand("shell", "settings", "put", "secure", "location_mode", enable)
+}
+
+func (device *Device) SetRoot(root bool) error {
+	command := "root"
+
+	if !root {
+		command = "unroot"
+	}
+
+	return device.executeCommand(command)
+}
+
+func (device *Device) Mount(remotePath string) error {
+	return device.executeCommand("shell", "service", "call", "mount", "90", "s16", "\""+remotePath+"\"")
 }
 
 func (device *Device) Release() {

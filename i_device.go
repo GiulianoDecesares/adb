@@ -23,6 +23,7 @@ type IDevice interface {
 
 	DeleteFile(remotePath string) error
 	DeleteDir(remotePath string) error
+	CreateDir(remotePath string) error
 
 	WakeUp() error
 
@@ -34,6 +35,10 @@ type IDevice interface {
 
 	SetPermission(grant bool, packageName string, permission string) error
 	SetGps(enabled bool) error
+
+	SetRoot(root bool) error
+
+	Mount(remotePath string) error
 
 	Release()
 }
