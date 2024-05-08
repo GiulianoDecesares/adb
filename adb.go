@@ -13,30 +13,26 @@ const (
 	adbVersionString      = "Android Debug Bridge version "
 )
 
-type AdbConfig struct {
-	AdbPath string `yaml:"Path"`
-}
-
 type Adb struct {
-	config  AdbConfig
-	devices []IDevice
+	adbExecutablePath string
+	devices           []IDevice
 }
 
-func New(config AdbConfig) *Adb {
+func New(adbExecutablePath string) *Adb {
 	return &Adb{
-		config: config,
+		adbExecutablePath: adbExecutablePath,
 	}
 }
 
 func (adb *Adb) Check() error {
-	info, err := os.Stat(adb.config.AdbPath)
+	info, err := os.Stat(adb.adbExecutablePath)
 
 	if err != nil {
 		return err
 	}
 
 	if info.IsDir() {
-		return fmt.Errorf("%s is not ADB executable file", adb.config.AdbPath)
+		return fmt.Errorf("%s is not ADB executable file", adb.adbExecutablePath)
 	}
 
 	return nil
@@ -52,11 +48,11 @@ func (adb *Adb) Stop() error {
 
 func (adb *Adb) GetVersion() (string, error) {
 	versionString, err := adb.ExecuteCommandWithReturn("version")
-	var splitted []string = strings.Split(versionString, "\n")
+	var split []string = strings.Split(versionString, "\n")
 
 	// Ugly
-	if len(splitted) > 0 {
-		versionString = strings.ReplaceAll(splitted[0], adbVersionString, "")
+	if len(split) > 0 {
+		versionString = strings.ReplaceAll(split[0], adbVersionString, "")
 	}
 
 	return versionString, err
@@ -103,7 +99,7 @@ func (adb *Adb) ExecuteCommand(command ...string) error {
 func (adb *Adb) ExecuteCommandWithContext(context context.Context, command ...string) *BufferedOutput {
 	var result BufferedOutput
 
-	executableCommand := exec.CommandContext(context, adb.config.AdbPath, command...)
+	executableCommand := exec.CommandContext(context, adb.adbExecutablePath, command...)
 	executableCommand.Stdout = &result.Out
 	executableCommand.Stderr = &result.Err
 
@@ -113,7 +109,7 @@ func (adb *Adb) ExecuteCommandWithContext(context context.Context, command ...st
 }
 
 func (adb *Adb) ExecuteCommandWithReturn(command ...string) (string, error) {
-	rawOutput, result := exec.Command(adb.config.AdbPath, command...).CombinedOutput()
+	rawOutput, result := exec.Command(adb.adbExecutablePath, command...).CombinedOutput()
 	return string(rawOutput), result
 }
 
