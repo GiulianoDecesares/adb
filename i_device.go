@@ -42,7 +42,7 @@ type IDevice interface {
 
 	Chmod(path string, mod string, recursive bool) error
 
-	Run(rawCommand string) error
+	Run(rawCommand ...string) error
 
 	Release()
 }
