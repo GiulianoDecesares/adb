@@ -203,6 +203,22 @@ func (device *Device) Mount(remotePath string) error {
 	return device.executeCommand("shell", "service", "call", "mount", "90", "s16", "\""+remotePath+"\"")
 }
 
+func (device *Device) Chmod(path string, mod string, recursive bool) error {
+	var command []string
+	command = append(command, "shell", "chmod")
+
+	if recursive {
+		command = append(command, "-R")
+	}
+
+	command = append(command, mod, path)
+	return device.executeCommand(command...)
+}
+
+func (device *Device) Run(rawCommand ...string) error {
+	return device.executeCommand(rawCommand...)
+}
+
 func (device *Device) Release() {
 	device.adbInstance.ReleaseDevice(device)
 }

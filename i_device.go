@@ -40,5 +40,9 @@ type IDevice interface {
 
 	Mount(remotePath string) error
 
+	Chmod(path string, mod string, recursive bool) error
+
+	Run(rawCommand string) error
+
 	Release()
 }
