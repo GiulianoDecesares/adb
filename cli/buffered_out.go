@@ -1,4 +1,4 @@
-package adb
+package cli
 
 import "bytes"
 
