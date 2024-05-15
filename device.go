@@ -14,10 +14,10 @@ type Device struct {
 	model   string
 	device  string
 
-	adbInstance *Adb
+	adbInstance IAdb
 }
 
-func NewDevice(id string, product string, model string, device string, adb *Adb) *Device {
+func NewDevice(id string, product string, model string, device string, adb IAdb) *Device {
 	return &Device{
 		id:          id,
 		product:     product,
@@ -68,7 +68,7 @@ func (device *Device) IsPackageInstalled(packageName string) bool {
 	output, _ := device.executeCommandWithReturn("shell", "pm", "list", "packages")
 
 	packageName = strings.TrimSpace(fmt.Sprintf("package:%s", packageName))
-	installed := strings.Split(string(output), "\r\n")
+	installed := strings.Split(output, "\r\n")
 
 	for _, current := range installed {
 		if current == packageName {

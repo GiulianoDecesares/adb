@@ -3,6 +3,7 @@ package adb
 import (
 	"context"
 	"fmt"
+	"github.com/pterm/pterm"
 	"os"
 	"os/exec"
 	"strings"
@@ -14,6 +15,8 @@ const (
 )
 
 type Adb struct {
+	logger *pterm.Logger
+
 	adbExecutablePath string
 	devices           []IDevice
 }
@@ -21,6 +24,13 @@ type Adb struct {
 func New(adbExecutablePath string) *Adb {
 	return &Adb{
 		adbExecutablePath: adbExecutablePath,
+	}
+}
+
+func NewWithLogger(adbExecutablePath string, logger *pterm.Logger) *Adb {
+	return &Adb{
+		adbExecutablePath: adbExecutablePath,
+		logger:            logger,
 	}
 }
 
@@ -48,7 +58,7 @@ func (adb *Adb) Stop() error {
 
 func (adb *Adb) GetVersion() (string, error) {
 	versionString, err := adb.ExecuteCommandWithReturn("version")
-	var split []string = strings.Split(versionString, "\n")
+	var split = strings.Split(versionString, "\n")
 
 	// Ugly
 	if len(split) > 0 {
@@ -97,6 +107,8 @@ func (adb *Adb) ExecuteCommand(command ...string) error {
 }
 
 func (adb *Adb) ExecuteCommandWithContext(context context.Context, command ...string) *BufferedOutput {
+	adb.TryLog(command...)
+
 	var result BufferedOutput
 
 	executableCommand := exec.CommandContext(context, adb.adbExecutablePath, command...)
@@ -109,13 +121,20 @@ func (adb *Adb) ExecuteCommandWithContext(context context.Context, command ...st
 }
 
 func (adb *Adb) ExecuteCommandWithReturn(command ...string) (string, error) {
+	adb.TryLog(command...)
 	rawOutput, result := exec.Command(adb.adbExecutablePath, command...).CombinedOutput()
 	return string(rawOutput), result
 }
 
+func (adb *Adb) TryLog(command ...string) {
+	if adb.logger != nil {
+		adb.logger.Trace(fmt.Sprintf("adb %s", strings.Trim(fmt.Sprint(command), "[]")))
+	}
+}
+
 func (adb *Adb) parseDevicesString(rawDevices string) []IDevice {
-	var devices []IDevice = make([]IDevice, 0)
-	var devicesStrings []string = strings.Split(rawDevices, "\n")
+	var devices = make([]IDevice, 0)
+	var devicesStrings = strings.Split(rawDevices, "\n")
 
 	if len(devicesStrings) > 0 {
 		// Trim all whitespace
@@ -155,11 +174,11 @@ func (adb *Adb) parseDevicesString(rawDevices string) []IDevice {
 						deviceData = deviceData[1:] // Skip device name
 
 						for _, data := range deviceData {
-							var dataItems []string = strings.Split(data, ":")
+							var dataItems = strings.Split(data, ":")
 
 							if len(dataItems) > 1 {
-								var dataType string = dataItems[0]
-								var data string = dataItems[1]
+								var dataType = dataItems[0]
+								var data = dataItems[1]
 
 								switch dataType {
 								case "product":
