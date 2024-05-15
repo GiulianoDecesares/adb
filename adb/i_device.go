@@ -1,15 +1,18 @@
 package adb
 
-import "context"
+import (
+	"context"
+	"github.com/GiulianoDecesares/adb/cli"
+	"github.com/GiulianoDecesares/adb/fastboot"
+)
 
 type IDevice interface {
-	GetId() string
-	GetModel() string
-	GetProduct() string
-	GetCodeName() string
+	GetSerial() string
+
+	GetProduct() (string, error)
+	GetModel() (string, error)
 
 	GetOsVersion() (string, error)
-	GetManufacturer() (string, error)
 
 	IsPackageInstalled(packageName string) bool
 	Install(packagePath string, overwrite bool) error
@@ -30,19 +33,17 @@ type IDevice interface {
 	ListDirectory(directory string) ([]string, error)
 	IsFile(deviceFilePath string) bool
 
-	Logcat(context context.Context) *BufferedOutput
-	LogcatWithFilter(context context.Context, filter string) *BufferedOutput
+	Logcat(context context.Context) *cli.BufferedOutput
+	LogcatWithFilter(context context.Context, filter string) *cli.BufferedOutput
 
 	SetPermission(grant bool, packageName string, permission string) error
 	SetGps(enabled bool) error
 
 	SetRoot(root bool) error
-
 	Mount(remotePath string) error
-
 	Chmod(path string, mod string, recursive bool) error
 
-	Run(rawCommand ...string) error
+	Run(command ...string) (string, error)
 
-	Release()
+	Fastboot(fastbootCli *fastboot.Fastboot) (*fastboot.Device, error)
 }
