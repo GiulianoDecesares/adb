@@ -1,4 +1,4 @@
-package fastboot
+package adb
 
 import (
 	"github.com/GiulianoDecesares/adb/cli"
@@ -22,8 +22,8 @@ func NewFastbootWithLogger(binPath string, logger *pterm.Logger) *Fastboot {
 	}
 }
 
-func (fastboot *Fastboot) Devices() ([]*Device, error) {
-	var devices = make([]*Device, 0)
+func (fastboot *Fastboot) Devices() ([]*FastbootDevice, error) {
+	var devices = make([]*FastbootDevice, 0)
 	output, err := fastboot.Run("devices")
 
 	if err != nil {
@@ -58,7 +58,7 @@ func (fastboot *Fastboot) Devices() ([]*Device, error) {
 			continue
 		}
 
-		devices = append(devices, NewDevice(deviceId, fastboot))
+		devices = append(devices, NewFastbootDevice(deviceId, fastboot))
 	}
 
 	return devices, nil

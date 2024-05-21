@@ -55,7 +55,7 @@ func (adb *Adb) GetVersion() (string, error) {
 	return versionString, err
 }
 
-func (adb *Adb) Devices() ([]IDevice, error) {
+func (adb *Adb) Devices() ([]*AdbDevice, error) {
 	rawDevices, err := adb.Run("devices", "-l")
 
 	if err != nil {
@@ -65,8 +65,8 @@ func (adb *Adb) Devices() ([]IDevice, error) {
 	return adb.parseDevicesString(rawDevices), nil
 }
 
-func (adb *Adb) parseDevicesString(rawDevices string) []IDevice {
-	var devices = make([]IDevice, 0)
+func (adb *Adb) parseDevicesString(rawDevices string) []*AdbDevice {
+	var devices = make([]*AdbDevice, 0)
 	var devicesStrings = strings.Split(rawDevices, "\n")
 
 	if len(devicesStrings) == 0 {

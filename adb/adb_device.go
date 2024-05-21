@@ -4,29 +4,39 @@ import (
 	"context"
 	"fmt"
 	"github.com/GiulianoDecesares/adb/cli"
-	"github.com/GiulianoDecesares/adb/fastboot"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 )
 
-type Device struct {
+type AdbDevice struct {
 	serialNo string
 	adbCli   *Adb
 }
 
-func NewDevice(serialNo string, adb *Adb) *Device {
-	return &Device{
+func NewDevice(serialNo string, adb *Adb) *AdbDevice {
+	return &AdbDevice{
 		serialNo: serialNo,
 		adbCli:   adb,
 	}
 }
 
-func (device *Device) GetSerial() string {
+func (device *AdbDevice) Reboot(ctx context.Context) error {
+	_, err := device.Run("reboot")
+
+	if err != nil {
+		return err
+	}
+
+	return device.WaitUntilReady(ctx)
+}
+
+func (device *AdbDevice) GetSerial() string {
 	return device.serialNo
 }
 
-func (device *Device) GetProduct() (string, error) {
+func (device *AdbDevice) GetProduct() (string, error) {
 	output, err := device.Run("shell", "getprop", "ro.product.device")
 
 	if err != nil {
@@ -36,7 +46,7 @@ func (device *Device) GetProduct() (string, error) {
 	return strings.TrimSpace(output), nil
 }
 
-func (device *Device) GetModel() (string, error) {
+func (device *AdbDevice) GetModel() (string, error) {
 	output, err := device.Run("shell", "getprop", "ro.product.model")
 
 	if err != nil {
@@ -46,7 +56,7 @@ func (device *Device) GetModel() (string, error) {
 	return strings.TrimSpace(output), nil
 }
 
-func (device *Device) GetOsVersion() (string, error) {
+func (device *AdbDevice) GetOsVersion() (string, error) {
 	output, err := device.Run("shell", "getprop", "ro.build.version.release")
 
 	if err != nil {
@@ -56,7 +66,7 @@ func (device *Device) GetOsVersion() (string, error) {
 	return strings.TrimSpace(output), nil
 }
 
-func (device *Device) IsPackageInstalled(packageName string) bool {
+func (device *AdbDevice) IsPackageInstalled(packageName string) bool {
 	var result = false
 	output, _ := device.Run("shell", "pm", "list", "packages")
 
@@ -73,7 +83,7 @@ func (device *Device) IsPackageInstalled(packageName string) bool {
 	return result
 }
 
-func (device *Device) Install(packagePath string, overwrite bool) error {
+func (device *AdbDevice) Install(packagePath string, overwrite bool) error {
 	var command = make([]string, 0)
 	command = append(command, "install")
 
@@ -86,17 +96,17 @@ func (device *Device) Install(packagePath string, overwrite bool) error {
 	return err
 }
 
-func (device *Device) Uninstall(packageName string) error {
+func (device *AdbDevice) Uninstall(packageName string) error {
 	_, err := device.Run("uninstall", packageName)
 	return err
 }
 
-func (device *Device) ForceStop(packageName string) error {
+func (device *AdbDevice) ForceStop(packageName string) error {
 	_, err := device.Run("shell", "am", "force-stop", packageName)
 	return err
 }
 
-func (device *Device) RunActivity(name string, extraParameters ...string) error {
+func (device *AdbDevice) RunActivity(name string, extraParameters ...string) error {
 	var parameters []string
 
 	parameters = append(parameters, "shell", "am", "start", "-n", name)
@@ -106,37 +116,47 @@ func (device *Device) RunActivity(name string, extraParameters ...string) error 
 	return err
 }
 
-func (device *Device) Pull(remotePath string, localPath string) error {
+func (device *AdbDevice) RunService(name string, extraParameters ...string) error {
+	var parameters []string
+
+	parameters = append(parameters, "shell", "am", "startservice", "-n", name)
+	parameters = append(parameters, extraParameters...)
+
+	_, err := device.Run(parameters...)
+	return err
+}
+
+func (device *AdbDevice) Pull(remotePath string, localPath string) error {
 	_, err := device.Run("pull", remotePath, localPath)
 	return err
 }
 
-func (device *Device) Push(localPath string, remotePath string) error {
+func (device *AdbDevice) Push(localPath string, remotePath string) error {
 	_, err := device.Run("push", localPath, remotePath)
 	return err
 }
 
-func (device *Device) DeleteFile(remotePath string) error {
+func (device *AdbDevice) DeleteFile(remotePath string) error {
 	_, err := device.Run("shell", "rm", remotePath)
 	return err
 }
 
-func (device *Device) DeleteDir(remotePath string) error {
+func (device *AdbDevice) DeleteDir(remotePath string) error {
 	_, err := device.Run("shell", "rmdir", remotePath)
 	return err
 }
 
-func (device *Device) CreateDir(remotePath string) error {
+func (device *AdbDevice) CreateDir(remotePath string) error {
 	_, err := device.Run("shell", "mkdir", "-p", "\""+remotePath+"\"")
 	return err
 }
 
-func (device *Device) WakeUp() error {
+func (device *AdbDevice) WakeUp() error {
 	_, err := device.Run("shell", "input", "keyevent", "KEYCODE_WAKEUP")
 	return err
 }
 
-func (device *Device) ListDirectory(directory string) ([]string, error) {
+func (device *AdbDevice) ListDirectory(directory string) ([]string, error) {
 	var files = make([]string, 0)
 	rawFiles, err := device.Run("shell", "ls", directory)
 
@@ -157,24 +177,24 @@ func (device *Device) ListDirectory(directory string) ([]string, error) {
 	return files, err
 }
 
-func (device *Device) IsFile(deviceFilePath string) bool {
+func (device *AdbDevice) IsFile(deviceFilePath string) bool {
 	_, err := device.Run("shell", "ls", deviceFilePath)
 	return err == nil
 }
 
-func (device *Device) CatFile(deviceFilePath string) (string, error) {
+func (device *AdbDevice) CatFile(deviceFilePath string) (string, error) {
 	return device.Run("shell", "cat", deviceFilePath)
 }
 
-func (device *Device) Logcat(context context.Context) *cli.BufferedOutput {
+func (device *AdbDevice) Logcat(context context.Context) *cli.BufferedOutput {
 	return device.adbCli.RunWithContext(context, "logcat")
 }
 
-func (device *Device) LogcatWithFilter(context context.Context, filter string) *cli.BufferedOutput {
+func (device *AdbDevice) LogcatWithFilter(context context.Context, filter string) *cli.BufferedOutput {
 	return device.adbCli.RunWithContext(context, "logcat", "-s", filter)
 }
 
-func (device *Device) SetPermission(grant bool, packageName string, permission string) error {
+func (device *AdbDevice) SetPermission(grant bool, packageName string, permission string) error {
 	command := "grant"
 
 	if !grant {
@@ -186,7 +206,7 @@ func (device *Device) SetPermission(grant bool, packageName string, permission s
 }
 
 // This will work only for Android 11.0+
-func (device *Device) SetGps(enabled bool) error {
+func (device *AdbDevice) SetGps(enabled bool) error {
 	enable := "0" // Disabled
 
 	if enabled {
@@ -197,7 +217,7 @@ func (device *Device) SetGps(enabled bool) error {
 	return err
 }
 
-func (device *Device) SetRoot(root bool) error {
+func (device *AdbDevice) SetRoot(root bool) error {
 	command := "root"
 
 	if !root {
@@ -208,12 +228,12 @@ func (device *Device) SetRoot(root bool) error {
 	return err
 }
 
-func (device *Device) Mount(remotePath string) error {
+func (device *AdbDevice) Mount(remotePath string) error {
 	_, err := device.Run("shell", "service", "call", "mount", "90", "s16", "\""+remotePath+"\"")
 	return err
 }
 
-func (device *Device) Chmod(path string, mod string, recursive bool) error {
+func (device *AdbDevice) Chmod(path string, mod string, recursive bool) error {
 	var command []string
 	command = append(command, "shell", "chmod")
 
@@ -227,9 +247,13 @@ func (device *Device) Chmod(path string, mod string, recursive bool) error {
 	return err
 }
 
-func (device *Device) Fastboot(fastbootCli *fastboot.Fastboot) (*fastboot.Device, error) {
-	if fastbootCli == nil {
-		return nil, errors.New("null fastboot CLI")
+func (device *AdbDevice) SwitchToFastboot(fastbootCli *Fastboot, ctx context.Context) (*FastbootDevice, error) {
+	if fastbootCli == nil || fastbootCli.Check() != nil {
+		return nil, errors.New("null or unavailable fastboot CLI")
+	}
+
+	if err := device.WaitUntilReady(ctx); err != nil {
+		return nil, errors.Wrap(err, "failed to wait for adb device ready")
 	}
 
 	_, err := device.Run("reboot", "bootloader")
@@ -238,14 +262,40 @@ func (device *Device) Fastboot(fastbootCli *fastboot.Fastboot) (*fastboot.Device
 		return nil, errors.Wrap(err, "unable to reboot to fastboot mode")
 	}
 
-	return fastboot.NewDevice(device.GetSerial(), fastbootCli), nil
+	fastbootDevice := NewFastbootDevice(device.GetSerial(), fastbootCli)
+
+	if err := fastbootDevice.WaitUntilReady(ctx); err != nil {
+		return nil, errors.Wrap(err, "failed to wait for fastboot device ready")
+	}
+
+	return fastbootDevice, nil
 }
 
-func (device *Device) Run(command ...string) (string, error) {
+func (device *AdbDevice) Run(command ...string) (string, error) {
 	var arguments []string
 
 	arguments = append(arguments, "-s", device.serialNo)
 	arguments = append(arguments, command...)
 
 	return device.adbCli.Run(arguments...)
+}
+
+func (device *AdbDevice) WaitUntilReady(ctx context.Context) error {
+	deviceReady := false
+
+	for !deviceReady {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+
+		default:
+			time.Sleep(time.Second)
+
+			if err := device.WakeUp(); err == nil {
+				deviceReady = true
+			}
+		}
+	}
+
+	return nil
 }
