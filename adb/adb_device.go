@@ -117,12 +117,9 @@ func (device *AdbDevice) RunActivity(name string, extraParameters ...string) err
 }
 
 func (device *AdbDevice) RunService(name string, extraParameters ...string) error {
-	var parameters []string
-
-	parameters = append(parameters, "shell", "am", "startservice", "-n", name)
-	parameters = append(parameters, extraParameters...)
-
-	_, err := device.Run(parameters...)
+	arguments := []string{"shell", "am", "startservice", "-a", name}
+	arguments = append(arguments, extraParameters...)
+	_, err := device.Run(arguments...)
 	return err
 }
 
@@ -272,9 +269,7 @@ func (device *AdbDevice) SwitchToFastboot(fastbootCli *Fastboot, ctx context.Con
 }
 
 func (device *AdbDevice) Run(command ...string) (string, error) {
-	var arguments []string
-
-	arguments = append(arguments, "-s", device.serialNo)
+	arguments := []string{"-s", device.GetSerial()}
 	arguments = append(arguments, command...)
 
 	return device.adbCli.Run(arguments...)
