@@ -3,11 +3,12 @@ package cli
 import (
 	"context"
 	"fmt"
-	"github.com/pterm/pterm"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/pterm/pterm"
 )
 
 type CommandlineTool struct {
@@ -45,8 +46,15 @@ func (cli *CommandlineTool) Check() error {
 
 func (cli *CommandlineTool) Run(command ...string) (string, error) {
 	cli.tryLog(command...)
-	rawOutput, result := cli.buildCommand(command...).CombinedOutput()
-	return string(rawOutput), result
+	output, err := cli.buildCommand(command...).CombinedOutput()
+
+	// If something went wrong, append stderr to error
+	// This ensures command output only when no errors
+	if err != nil {
+		return "", fmt.Errorf("command failed: %s\noutput: %s", err, output)
+	}
+
+	return string(output), nil
 }
 
 func (cli *CommandlineTool) RunWithContext(context context.Context, command ...string) *BufferedOutput {
