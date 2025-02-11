@@ -1,9 +1,12 @@
 package adb
 
 import (
-	"github.com/GiulianoDecesares/adb/cli"
-	"github.com/pterm/pterm"
+	"regexp"
 	"strings"
+
+	"github.com/GiulianoDecesares/adb/cli"
+	"github.com/pkg/errors"
+	"github.com/pterm/pterm"
 )
 
 const (
@@ -25,9 +28,7 @@ func NewAdb(binPath string) *Adb {
 }
 
 func NewAdbWithLogger(binPath string, logger *pterm.Logger) *Adb {
-	adb := &Adb{
-		CommandlineTool: cli.NewCLIWithLogger(binPath, logger),
-	}
+	adb := &Adb{CommandlineTool: cli.NewCLIWithLogger(binPath, logger)}
 
 	_ = adb.Start()
 	return adb
@@ -45,14 +46,19 @@ func (adb *Adb) Stop() error {
 
 func (adb *Adb) GetVersion() (string, error) {
 	versionString, err := adb.Run("version")
-	var split = strings.Split(versionString, "\n")
 
-	// Ugly
-	if len(split) > 0 {
-		versionString = strings.ReplaceAll(split[0], adbVersionString, "")
+	if err != nil {
+		return "", errors.Wrap(err, "error getting adb version")
 	}
 
-	return versionString, err
+	re := regexp.MustCompile(`^Android Debug Bridge version (\S+)`)
+	matches := re.FindStringSubmatch(versionString)
+
+	if len(matches) < 2 {
+		return "", errors.New("failed to get adb version: invalid output")
+	}
+
+	return matches[1], nil
 }
 
 func (adb *Adb) Devices() ([]*AdbDevice, error) {

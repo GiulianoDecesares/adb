@@ -3,9 +3,10 @@ package adb
 import (
 	"context"
 	"fmt"
-	"github.com/GiulianoDecesares/adb/cli"
 	"strings"
 	"time"
+
+	"github.com/GiulianoDecesares/adb/cli"
 
 	"github.com/pkg/errors"
 )
@@ -223,6 +224,16 @@ func (device *AdbDevice) SetRoot(root bool) error {
 
 	_, err := device.Run(command)
 	return err
+}
+
+func (device *AdbDevice) IsRooted() (bool, error) {
+	output, err := device.Run("shell", "whoami")
+
+	if err != nil {
+		return false, err
+	}
+
+	return strings.TrimSpace(output) == "root", nil
 }
 
 func (device *AdbDevice) Mount(remotePath string) error {
