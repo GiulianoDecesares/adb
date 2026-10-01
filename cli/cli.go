@@ -77,9 +77,13 @@ func (cli *CommandlineTool) tryLog(command ...string) {
 }
 
 func (cli *CommandlineTool) buildCommand(command ...string) *exec.Cmd {
-	return exec.Command(cli.binPath, command...)
+	cmd := exec.Command(cli.binPath, command...)
+	configureCommand(cmd)
+	return cmd
 }
 
 func (cli *CommandlineTool) buildCommandWithContext(ctx context.Context, command ...string) *exec.Cmd {
-	return exec.CommandContext(ctx, cli.binPath, command...)
+	cmd := exec.CommandContext(ctx, cli.binPath, command...)
+	configureCommand(cmd)
+	return cmd
 }
